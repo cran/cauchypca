@@ -15,11 +15,13 @@ cauchy.pca <- function(x, k = 1, center = "sm", scale = "mad", trials = 20, para
 
   if ( length(center) == 1 ) {
     if ( center == "sm" ) {
-	  cen <- Rfast::spat.med(x, tol = 1e-7)
-	} else if  ( center == "med" )  cen <- Rfast::colMedians(x)
-	x <- Rfast::eachrow(x, cen, oper = "-")
+	    cen <- Rfast::spat.med(x, tol = 1e-7)
+	  } else if ( center == "med" )  cen <- Rfast::colMedians(x)
+	  x <- Rfast::eachrow(x, cen, oper = "-")
   } else  x <- Rfast::eachrow(x, center, oper = "-")
-  if ( length(scale) == 1 )  sc <- Rfast::colMads(x)
+  if ( length(scale) == 1 ) {
+    sc <- Rfast::colMads(x)
+  } else  sc <- scale
   x <- Rfast::eachrow(x, sc, oper = "/")
 
   cl <- NULL

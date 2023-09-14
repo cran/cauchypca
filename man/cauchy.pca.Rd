@@ -21,7 +21,7 @@ The number of eigenvectors to extract.
 }
 \item{center}{
 The way to center the data. This can be either "sm" corresponding to the spatial median,
-"med" corresponding to the classical column-wise median or a vector supplied by the user.
+"med" corresponding to the classical variable-wise median. Alternatively the user can specify their own vector.
 }
 \item{scale}{
 This is the method to scale the data. The default value is "mad" corresponding to the

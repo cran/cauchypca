@@ -13,8 +13,8 @@ A new robust principal component analysis algorithm is implemented that relies u
 \tabular{ll}{
 Package: \tab cauchypca\cr
 Type: \tab Package\cr
-Version: \tab 1.0 \cr
-Date: \tab 2022-11-09\cr
+Version: \tab 1.1 \cr
+Date: \tab 2023-09-15\cr
 License: \tab GPL-2\cr
 }
 }
