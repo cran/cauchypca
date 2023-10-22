@@ -8,7 +8,7 @@ cauchy.pca <- function(x, k = 1, center = "sm", scale = "mad", trials = 20, para
   tic <- proc.time()
   p <- dim(x)[2]
   if (k > p)  k <- p
-  s <- 0.5 * Rfast::mad2(x)
+  s <- 0.5 * Rfast::Mad(x)
   if (s == 0)  s <- 0.1
   vec <- matrix(0, p, k )
   mat <- matrix(0, trials, p)
