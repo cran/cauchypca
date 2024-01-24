@@ -60,7 +60,8 @@ A matrix with the robust eigenvectors.
 }
 
 \references{
-Fayomi A., Pantazis Y., Tsagris M. and Wood A.T.A. (2022). Cauchy robust principal component analysis with applications to high-dimensional data sets. <arXiv:2211.03181>.
+Fayomi A., Pantazis Y., Tsagris M. and Wood A.T.A. (2024). Cauchy robust principal component analysis with applications to high-dimensional data sets. Statistics and Computing, 34: 26.
+https://doi.org/10.1007/s11222-023-10328-x
 }
 
 \author{
@@ -70,8 +71,10 @@ R implementation and documentation: Michail Tsagris \email{mtsagris@uoc.gr}.
 }
 
 
-%\seealso{
-%}
+\seealso{
+\code{ \link{cauchy.mle}
+}
+}
 
 \examples{
 x <- as.matrix( iris[, 1:4] )

@@ -2,6 +2,7 @@
 
 importFrom("Rfast", cauchy.mle, eachcol.apply, Mad,
            spat.med, colMads, eachrow)
+importFrom("Rfast2", colcauchy.mle)
 
 importFrom("stats", rnorm)
 
@@ -12,5 +13,5 @@ import("foreach")
 exportPattern("^[[:alpha:]]+")
 exportPattern("^[^\\.]")
 
-export(cauchy.pca)
+export(cauchy.pca, cauchy.mle)
 export(.onAttach)
