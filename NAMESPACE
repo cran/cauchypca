@@ -2,7 +2,6 @@
 
 importFrom("Rfast", cauchy.mle, eachcol.apply, Mad,
            spat.med, colMads, eachrow)
-importFrom("Rfast2", colcauchy.mle)
 
 importFrom("stats", rnorm)
 
