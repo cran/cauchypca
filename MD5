@@ -1,8 +1,8 @@
-08bcf9bc367a809d559c19326c1d83b9 *DESCRIPTION
-0ee2b728de039ea1d18c74a814c829ef *NAMESPACE
+87392b10294644ecb7291826408ac94c *DESCRIPTION
+06af57fa27571f449bf42fba6cb07cab *NAMESPACE
 01f4370467c9bbf8ccc71b542a293342 *R/cauchy.mle.R
-23c19f6798844fa21b4ced90ce462fec *R/cauchy.pca.R
+678e5872e5ad6fb8ee5f8c481bbf0f47 *R/cauchy.pca.R
 230c57002f9c2b39ac184b1373b279b3 *R/onAttach.R
 a230340f1b7ed1f546684a13293e1ee4 *man/cauchy.mle.Rd
-37681c78fbc336b27f1341d7051a3d50 *man/cauchy.pca.Rd
-8564c530d5a30ed0f6685f7715141090 *man/cauchypca-package.Rd
+304d2240394b73d64a3bf527c37fe26a *man/cauchy.pca.Rd
+66903168fc0bb7a4710f7571a2d4518c *man/cauchypca-package.Rd

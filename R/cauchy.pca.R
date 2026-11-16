@@ -3,7 +3,7 @@
 ##### This is the main PCA function
 ###################
 #####################
-cauchy.pca <- function(x, k = 1, center = "sm", scale = "mad", trials = 20, parallel = FALSE) {
+cauchy.pca <- function(x, k = 1, center = "sm", scale = "mad", trials = 20, ncores = 1) {
 
   tic <- proc.time()
   p <- dim(x)[2]
@@ -11,13 +11,12 @@ cauchy.pca <- function(x, k = 1, center = "sm", scale = "mad", trials = 20, para
   s <- 0.5 * Rfast::Mad(x)
   if (s == 0)  s <- 0.1
   vec <- matrix(0, p, k )
-  mat <- matrix(0, trials, p)
 
   if ( length(center) == 1 ) {
     if ( center == "sm" ) {
-	    cen <- Rfast::spat.med(x, tol = 1e-7)
-	  } else if ( center == "med" )  cen <- Rfast::colMedians(x)
-	  x <- Rfast::eachrow(x, cen, oper = "-")
+      cen <- Rfast::spat.med(x, tol = 1e-7)
+    } else if ( center == "med" )  cen <- Rfast::colMedians(x)
+    x <- Rfast::eachrow(x, cen, oper = "-")
   } else  x <- Rfast::eachrow(x, center, oper = "-")
   if ( length(scale) == 1 ) {
     sc <- Rfast::colMads(x)
@@ -25,15 +24,13 @@ cauchy.pca <- function(x, k = 1, center = "sm", scale = "mad", trials = 20, para
   x <- Rfast::eachrow(x, sc, oper = "/")
 
   cl <- NULL
-  if ( parallel ) {
-    suppressWarnings()
-    requireNamespace("doParallel", quietly = TRUE, warn.conflicts = FALSE)
-    closeAllConnections()
-    cl <- parallel::makePSOCKcluster( parallel::detectCores() )
-    doParallel::registerDoParallel(cl)
+  ncores <- min( as.integer(ncores), trials )  ## no point in more cores than trials
+  if ( ncores > 1 ) {
+    cl <- parallel::makePSOCKcluster(ncores)
+    on.exit( parallel::stopCluster(cl) )  ## the cluster is closed even if an error occurs
   }
 
-  mod <- .cauchy.pca1(x, trials = trials, p = p, s = s, mat = mat, cl = cl)
+  mod <- .cauchy.pca1(x, trials = trials, p = p, s = s, cl = cl)
   loglik <- mod$loglik
   mu <- mod$mu
   su <- mod$su
@@ -42,7 +39,7 @@ cauchy.pca <- function(x, k = 1, center = "sm", scale = "mad", trials = 20, para
   while ( m < k ) {
     m <- m + 1
     x <- x - tcrossprod( x %*% vec[, m - 1], vec[, m - 1] )
-    mod <- .cauchy.pca1(x, trials = trials, p = p, s = s, mat = mat, cl = cl)
+    mod <- .cauchy.pca1(x, trials = trials, p = p, s = s, cl = cl)
     vec[, m] <- mod$u
     loglik[m] <- mod$loglik
     mu[m] <- mod$mu
@@ -66,37 +63,36 @@ cauchy.pca <- function(x, k = 1, center = "sm", scale = "mad", trials = 20, para
 ##### This calculates the first PCA attempting multiple starting values
 ###################
 #####################
-.cauchy.pca1 <- function(x, trials = 20, p, s, mat, cl = NULL) {
+.cauchy.pca1 <- function(x, trials = 20, p, s, cl = NULL) {
   ## x is the data
   ## trials shows the number of tries
   ## Cauchy PCA is more like a probabilistic PCA,
   ## hence I give it 20 times and choose the optimal in the end
+  ## The starting vectors are generated here, in the master process, one column per trial.
+  ## This gives exactly the same random numbers as calling rnorm(p, 0, s) inside each trial,
+  ## so the results are reproducible with set.seed() and identical with or without parallel.
+  starts <- matrix( rnorm(p * trials, 0, s), p, trials )
+
   suppressWarnings({
-
     if ( is.null(cl) ) {
-      val <- rep(Inf, trials)
-      mu <- su <- numeric(trials)
-      for ( j in 1:trials ) {
-        a <- .cpca_helper( x, vec = rnorm(p, 0, s) )
-        mat[j, ] <- a$u
-        val[j] <- a$loglik
-        mu[j] <- a$mu
-        su[j] <- a$su
-      }
-      ind <- which.min(val)
-      res <- list( loglik = val[ind], mu = mu[ind], su = su[ind], u = mat[ind, ] )
-
+      mod <- sapply( 1:trials, function(j) {
+        a <- .cpca_helper( x, vec = starts[, j] )
+        c(a$loglik, a$mu, a$su, a$u)
+      } )
     } else {
-      mod <- foreach::foreach(i = 1:trials, .combine = rbind, .export = ".cpca_helper", .packages = "Rfast") %dopar% {
-        a <- .cpca_helper( x, vec = rnorm(p, 0, s) )
-        return( c(a$loglik, a$mu, a$su, a$u) )
-      }
-      ind <- which.min(mod[, 1])
-      res <- list(loglik = mod[ind, 1], mu = mod[ind, 2], su = mod[ind, 3], u = mod[ind, -c(1:3)])
+      ## the helper function and the data are passed as arguments, so nothing
+      ## needs to be exported to the workers
+      ## (the data are passed as "dat", because "x" clashes with an argument of
+      ## parallel::clusterApply, which parSapply calls internally)
+      mod <- parallel::parSapply( cl, 1:trials, function(j, dat, starts, helper) {
+        a <- helper( dat, vec = starts[, j] )
+        c(a$loglik, a$mu, a$su, a$u)
+      }, dat = x, starts = starts, helper = .cpca_helper )
     }
   })
-
-  res
+  ## mod is a (3 + p) x trials matrix, each column is a trial
+  ind <- which.min(mod[1, ])
+  list( loglik = mod[1, ind], mu = mod[2, ind], su = mod[3, ind], u = mod[-c(1:3), ind] )
 }
 
 
@@ -119,7 +115,7 @@ cauchy.pca <- function(x, k = 1, center = "sm", scale = "mad", trials = 20, para
   y <- x %*% u
   pa <- Rfast::cauchy.mle(y, tol = 1e-07)
   lik2 <- pa$loglik
-  
+
   ## step 3 and beyond
   while ( lik1 - lik2 > 1e-6 ) {  ## tolerance is 10^(-6)
     lik1 <- lik2
